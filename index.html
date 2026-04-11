@@ -7,9 +7,41 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #111;
+      --fg: #eee;
+      --canvas-border: #444;
+      --box-bg: #1e1e1e;
+      --box-border: #444;
+      --label-color: #888;
+      --controls-color: #aaa;
+      --controls-strong: #eee;
+      --message-color: #fff;
+      --message-bg: rgba(0,0,0,0.75);
+      --grid-color: #222;
+      --ghost-color: rgba(255,255,255,0.15);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f0f0f0;
+        --fg: #111;
+        --canvas-border: #bbb;
+        --box-bg: #fff;
+        --box-border: #ccc;
+        --label-color: #666;
+        --controls-color: #555;
+        --controls-strong: #111;
+        --message-color: #000;
+        --message-bg: rgba(255,255,255,0.85);
+        --grid-color: #ccc;
+        --ghost-color: rgba(0,0,0,0.12);
+      }
+    }
+
     body {
-      background: #111;
-      color: #eee;
+      background: var(--bg);
+      color: var(--fg);
       font-family: monospace;
       display: flex;
       flex-direction: column;
@@ -28,7 +60,7 @@
     }
 
     canvas {
-      border: 2px solid #444;
+      border: 2px solid var(--canvas-border);
       display: block;
       image-rendering: pixelated;
     }
@@ -41,15 +73,15 @@
     }
 
     .stat-box {
-      background: #1e1e1e;
-      border: 1px solid #444;
+      background: var(--box-bg);
+      border: 1px solid var(--box-border);
       padding: 0.6rem 1rem;
       border-radius: 4px;
     }
 
     .stat-label {
       font-size: 0.7rem;
-      color: #888;
+      color: var(--label-color);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -60,18 +92,18 @@
     }
 
     #controls {
-      background: #1e1e1e;
-      border: 1px solid #444;
+      background: var(--box-bg);
+      border: 1px solid var(--box-border);
       border-radius: 4px;
       padding: 0.6rem 1rem;
       font-size: 0.75rem;
       line-height: 1.8;
-      color: #aaa;
+      color: var(--controls-color);
     }
 
     #controls strong {
       display: block;
-      color: #eee;
+      color: var(--controls-strong);
       margin-bottom: 0.3rem;
       font-size: 0.8rem;
     }
@@ -79,8 +111,8 @@
     #message {
       position: absolute;
       font-size: 1.4rem;
-      color: #fff;
-      background: rgba(0,0,0,0.75);
+      color: var(--message-color);
+      background: var(--message-bg);
       padding: 0.5rem 1.2rem;
       border-radius: 6px;
       display: none;
@@ -161,7 +193,9 @@
       return t;
     })();
 
-    const GHOST_COLOR = 'rgba(255,255,255,0.15)';
+    function getCSSVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -189,7 +223,7 @@
     function draw(board) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       // Draw grid
-      ctx.strokeStyle = '#222';
+      ctx.strokeStyle = getCSSVar('--grid-color');
       ctx.lineWidth = 0.5;
       for (let c = 0; c <= COLS; c++) {
         ctx.beginPath();
@@ -212,7 +246,7 @@
           const y = r * CELL;
           if (v === 1) {
             // ghost piece
-            ctx.fillStyle = GHOST_COLOR;
+            ctx.fillStyle = getCSSVar('--ghost-color');
             ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
           } else {
             const color = ANSI256[v] ?? '#888';
