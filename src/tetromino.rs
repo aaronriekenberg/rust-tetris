@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::RngExt;
 
 /// The seven standard Tetris pieces.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
