@@ -1,0 +1,33 @@
+[package]
+name = "rust-tetris"
+version = "0.1.0"
+edition = "2021"
+description = "TUI Tetris game in Rust with WebAssembly support"
+license = "MIT"
+repository = "https://github.com/aaronriekenberg/rust-tetris"
+
+[[bin]]
+name = "rust-tetris"
+path = "src/main.rs"
+required-features = ["tui"]
+
+[lib]
+name = "rust_tetris"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rand = "0.9"
+crossterm = { version = "0.28", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
+[features]
+default = ["tui"]
+tui = ["dep:crossterm"]
+
+[profile.release]
+opt-level = 3
+lto = true
