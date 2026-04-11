@@ -273,10 +273,10 @@ impl GameState {
         if self.game_over || self.paused {
             return !self.game_over;
         }
-        if let Some(ref mut piece) = self.current {
-            if !piece.try_move_down(&self.board) {
-                self.lock_current();
-            }
+        if let Some(ref mut piece) = self.current
+            && !piece.try_move_down(&self.board)
+        {
+            self.lock_current();
         }
         !self.game_over
     }
@@ -320,10 +320,10 @@ impl GameState {
         if self.game_over || self.paused {
             return;
         }
-        if let Some(ref mut p) = self.current {
-            if p.try_move_down(&self.board) {
-                self.score += 1;
-            }
+        if let Some(ref mut p) = self.current
+            && p.try_move_down(&self.board)
+        {
+            self.score += 1;
         }
     }
 

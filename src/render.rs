@@ -163,17 +163,17 @@ fn draw_board(out: &mut impl Write, gs: &GameState) -> io::Result<()> {
             let ri = r as i32;
             let ci = c as i32;
 
-            if let Some(color) = active_color {
-                if active_cells.contains(&(ri, ci)) {
-                    queue!(
-                        out,
-                        SetBackgroundColor(color),
-                        SetForegroundColor(Color::Black),
-                        Print("  "),
-                        ResetColor,
-                    )?;
-                    continue;
-                }
+            if let Some(color) = active_color
+                && active_cells.contains(&(ri, ci))
+            {
+                queue!(
+                    out,
+                    SetBackgroundColor(color),
+                    SetForegroundColor(Color::Black),
+                    Print("  "),
+                    ResetColor,
+                )?;
+                continue;
             }
 
             if ghost_cells.contains(&(ri, ci)) {
