@@ -273,25 +273,35 @@
 
     // ── Responsive cell-size calculation ────────────────────────────────────────
 
+    const MIN_CELL_MOBILE  = 14; // smallest legible cell on a narrow phone
+    const MIN_CELL_DESKTOP = 20; // minimum to keep the board usable on desktop
+    const MAX_CELL_DESKTOP = 40; // cap so the board doesn't grow too large
+    // A swipe covering ≥3 cell heights is treated as a hard drop, shorter as soft drop
+    const HARD_DROP_SWIPE_CELLS = 3;
+
     function computeCell() {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
       if (vw <= 600) {
         // Mobile vertical layout:
-        //   title ~28px + gap 8px + stats-bar ~50px + gap 8px
-        //   + touch controls ~4*(52+6.4)=~234px + gap 8px + padding 8px
+        //   h1 ~28px  + body-gap 8px
+        //   + stats-bar ~50px + gap 8px
+        //   + touch-controls: 4 rows × (52px button + 6.4px gap) ≈ 234px + gap 8px
+        //   + body padding 8px
         const reservedH = 28 + 8 + 50 + 8 + 234 + 8 + 8;
         const availH = vh - reservedH;
-        const availW = vw - 8; // 4px padding each side
-        return Math.max(14, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
+        const availW = vw - 8; // 4px body padding each side
+        return Math.max(MIN_CELL_MOBILE, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
       } else {
-        // Desktop horizontal layout: sidebar ~135px + gap ~24px
-        const reservedW = 135 + 24 + 16;
-        const reservedH = 44 + 16 + 16; // h1 + gaps + padding
+        // Desktop horizontal layout:
+        //   sidebar min-width 120px + gap 24px + body padding 16px
+        //   h1 ~44px + gaps + body padding ~32px
+        const reservedW = 120 + 24 + 16;
+        const reservedH = 44 + 32;
         const availW = vw - reservedW;
         const availH = vh - reservedH;
-        return Math.max(20, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS), 40));
+        return Math.max(MIN_CELL_DESKTOP, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS), MAX_CELL_DESKTOP));
       }
     }
 
@@ -511,7 +521,7 @@
       } else {
         // Vertical swipe down → soft or hard drop
         if (dy > 0) {
-          if (absDy > CELL * 3) game.hard_drop();
+          if (absDy > CELL * HARD_DROP_SWIPE_CELLS) game.hard_drop();
           else                  game.soft_drop();
         }
       }
