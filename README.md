@@ -25,6 +25,31 @@ A TUI (Terminal User Interface) Tetris game written in Rust, with WebAssembly su
 | P | Pause / resume |
 | Q / Esc | Quit |
 
+## Touch / Mobile Controls (iPhone & Android)
+
+On narrow screens (≤ 600 px wide) the wasm app switches to a mobile layout with
+on-screen buttons and swipe gestures on the board canvas.
+
+### On-screen buttons
+
+| Button | Action |
+|--------|--------|
+| ↻ | Rotate |
+| ◀ / ▶ | Move left / right |
+| ▼ | Soft drop |
+| ⏬ | Hard drop |
+| ⏸ | Pause / resume |
+| ↺ | New game |
+
+### Swipe gestures (on the board canvas)
+
+| Gesture | Action |
+|---------|--------|
+| Tap | Rotate |
+| Swipe left / right | Move left / right |
+| Short swipe down | Soft drop |
+| Long swipe down (≥ 3 cell heights) | Hard drop |
+
 ## Building & Running
 
 ```bash
