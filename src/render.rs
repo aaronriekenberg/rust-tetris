@@ -294,6 +294,12 @@ fn draw_overlay(out: &mut impl Write, title: &str, subtitle: &str, (oc, or): (u1
     Ok(())
 }
 
+/// Clear the screen and redraw the static frame (e.g. after a terminal resize).
+pub fn clear_and_redraw_frame(out: &mut impl Write) -> io::Result<()> {
+    execute!(out, Clear(ClearType::All))?;
+    draw_static_frame(out)
+}
+
 /// Clear the terminal and hide the cursor before starting.
 pub fn setup_terminal(out: &mut impl Write) -> io::Result<()> {
     execute!(

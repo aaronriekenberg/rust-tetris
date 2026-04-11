@@ -21,20 +21,24 @@ fn main() -> io::Result<()> {
         let interval = Duration::from_millis(gs.drop_interval_ms());
         let timeout = interval.saturating_sub(last_tick.elapsed());
 
-        if event::poll(timeout)?
-            && let Event::Key(KeyEvent {
-                code, modifiers, ..
-            }) = event::read()?
-        {
-            match code {
-                KeyCode::Left => gs.move_left(),
-                KeyCode::Right => gs.move_right(),
-                KeyCode::Up | KeyCode::Char('z') | KeyCode::Char('Z') => gs.rotate(),
-                KeyCode::Down => gs.soft_drop(),
-                KeyCode::Char(' ') => gs.hard_drop(),
-                KeyCode::Char('p') | KeyCode::Char('P') => gs.toggle_pause(),
-                KeyCode::Char('q') | KeyCode::Char('Q') | KeyCode::Esc => break,
-                KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => break,
+        if event::poll(timeout)? {
+            match event::read()? {
+                Event::Key(KeyEvent {
+                    code, modifiers, ..
+                }) => match code {
+                    KeyCode::Left => gs.move_left(),
+                    KeyCode::Right => gs.move_right(),
+                    KeyCode::Up | KeyCode::Char('z') | KeyCode::Char('Z') => gs.rotate(),
+                    KeyCode::Down => gs.soft_drop(),
+                    KeyCode::Char(' ') => gs.hard_drop(),
+                    KeyCode::Char('p') | KeyCode::Char('P') => gs.toggle_pause(),
+                    KeyCode::Char('q') | KeyCode::Char('Q') | KeyCode::Esc => break,
+                    KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => break,
+                    _ => {}
+                },
+                Event::Resize(_, _) => {
+                    render::clear_and_redraw_frame(&mut out)?;
+                }
                 _ => {}
             }
         }
