@@ -481,6 +481,7 @@
             showMessage('Paused – P to resume');
           } else {
             hideMessage();
+            currentInterval = 0;
             reschedule();
           }
           break;
@@ -571,6 +572,7 @@
         showMessage('Paused – tap ⏸ to resume');
       } else {
         hideMessage();
+        currentInterval = 0;
         reschedule();
       }
     }, { passive: false });
