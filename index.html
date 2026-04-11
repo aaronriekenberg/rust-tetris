@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1" />
   <title>Rust Tetris</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,16 +46,18 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      gap: 1rem;
+      justify-content: flex-start;
+      min-height: 100dvh;
+      padding: 0.5rem 0.25rem;
+      gap: 0.5rem;
+      overflow-x: hidden;
     }
 
-    h1 { font-size: 1.8rem; letter-spacing: 0.1em; }
+    h1 { font-size: 1.4rem; letter-spacing: 0.1em; }
 
     #wrapper {
       display: flex;
-      gap: 2rem;
+      gap: 1.5rem;
       align-items: flex-start;
     }
 
@@ -63,32 +65,46 @@
       border: 2px solid var(--canvas-border);
       display: block;
       image-rendering: pixelated;
+      touch-action: none;
     }
 
     #sidebar {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      min-width: 130px;
+      gap: 0.75rem;
+      min-width: 120px;
+    }
+
+    /* Mobile horizontal stats bar (hidden on desktop) */
+    #stats-bar {
+      display: none;
+      gap: 0.5rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    #stats-bar .stat-box {
+      flex: 1;
+      text-align: center;
     }
 
     .stat-box {
       background: var(--box-bg);
       border: 1px solid var(--box-border);
-      padding: 0.6rem 1rem;
+      padding: 0.4rem 0.6rem;
       border-radius: 4px;
     }
 
     .stat-label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--label-color);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .stat-value {
-      font-size: 1.4rem;
-      margin-top: 0.2rem;
+      font-size: 1.2rem;
+      margin-top: 0.1rem;
     }
 
     #controls {
@@ -110,12 +126,13 @@
 
     #message {
       position: absolute;
-      font-size: 1.4rem;
+      font-size: 1.2rem;
       color: var(--message-color);
       background: var(--message-bg);
       padding: 0.5rem 1.2rem;
       border-radius: 6px;
       display: none;
+      text-align: center;
     }
 
     #board-container {
@@ -124,10 +141,77 @@
       align-items: center;
       justify-content: center;
     }
+
+    /* Touch control buttons (hidden on desktop) */
+    #touch-controls {
+      display: none;
+      flex-direction: column;
+      gap: 0.4rem;
+      width: 100%;
+      max-width: 320px;
+      padding: 0 0.25rem;
+    }
+
+    .touch-row {
+      display: flex;
+      gap: 0.4rem;
+      justify-content: center;
+    }
+
+    .touch-btn {
+      flex: 1;
+      min-height: 52px;
+      font-size: 1.3rem;
+      background: var(--box-bg);
+      color: var(--fg);
+      border: 1px solid var(--box-border);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .touch-btn:active {
+      background: var(--canvas-border);
+    }
+
+    /* On narrow screens switch to mobile layout */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.1rem; }
+
+      #stats-bar { display: flex; }
+
+      #wrapper { gap: 0; }
+
+      #sidebar { display: none; }
+
+      #touch-controls { display: flex; }
+    }
   </style>
 </head>
 <body>
   <h1>🟦 Rust Tetris</h1>
+
+  <!-- Mobile-only horizontal stats bar -->
+  <div id="stats-bar">
+    <div class="stat-box">
+      <div class="stat-label">Score</div>
+      <div class="stat-value" id="score-m">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Level</div>
+      <div class="stat-value" id="level-m">1</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Lines</div>
+      <div class="stat-value" id="lines-m">0</div>
+    </div>
+  </div>
 
   <div id="wrapper">
     <div id="board-container">
@@ -161,12 +245,55 @@
     </div>
   </div>
 
+  <!-- Mobile-only touch controls -->
+  <div id="touch-controls">
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-rotate">↻</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-left">◀</button>
+      <button class="touch-btn" id="btn-right">▶</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-soft">▼</button>
+      <button class="touch-btn" id="btn-hard">⏬</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-pause">⏸</button>
+      <button class="touch-btn" id="btn-new">↺</button>
+    </div>
+  </div>
+
   <script type="module">
     import init, { WasmGame } from './pkg/rust_tetris.js';
 
     const COLS = 10;
     const ROWS = 20;
-    const CELL = 30; // px per cell
+    let CELL = 30; // px per cell – recomputed on resize
+
+    // ── Responsive cell-size calculation ────────────────────────────────────────
+
+    function computeCell() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      if (vw <= 600) {
+        // Mobile vertical layout:
+        //   title ~28px + gap 8px + stats-bar ~50px + gap 8px
+        //   + touch controls ~4*(52+6.4)=~234px + gap 8px + padding 8px
+        const reservedH = 28 + 8 + 50 + 8 + 234 + 8 + 8;
+        const availH = vh - reservedH;
+        const availW = vw - 8; // 4px padding each side
+        return Math.max(14, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
+      } else {
+        // Desktop horizontal layout: sidebar ~135px + gap ~24px
+        const reservedW = 135 + 24 + 16;
+        const reservedH = 44 + 16 + 16; // h1 + gaps + padding
+        const availW = vw - reservedW;
+        const availH = vh - reservedH;
+        return Math.max(20, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS), 40));
+      }
+    }
 
     // ANSI-256 colour palette (subset used by the tetrominoes)
     // Maps colour index → CSS colour string
@@ -199,13 +326,21 @@
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width  = COLS * CELL;
-    canvas.height = ROWS * CELL;
 
-    const scoreEl = document.getElementById('score');
-    const levelEl = document.getElementById('level');
-    const linesEl = document.getElementById('lines');
-    const msgEl   = document.getElementById('message');
+    const scoreEl  = document.getElementById('score');
+    const levelEl  = document.getElementById('level');
+    const linesEl  = document.getElementById('lines');
+    const scoreMEl = document.getElementById('score-m');
+    const levelMEl = document.getElementById('level-m');
+    const linesMEl = document.getElementById('lines-m');
+    const msgEl    = document.getElementById('message');
+
+    function resizeCanvas() {
+      CELL = computeCell();
+      canvas.width  = COLS * CELL;
+      canvas.height = ROWS * CELL;
+      if (game) render();
+    }
 
     let game = null;
     let tickTimer = null;
@@ -289,9 +424,15 @@
     function render() {
       if (!game) return;
       draw(game.board_flat());
-      scoreEl.textContent = game.score();
-      levelEl.textContent = game.level();
-      linesEl.textContent = game.lines_cleared();
+      const score = game.score();
+      const level = game.level();
+      const lines = game.lines_cleared();
+      scoreEl.textContent  = score;
+      levelEl.textContent  = level;
+      linesEl.textContent  = lines;
+      scoreMEl.textContent = score;
+      levelMEl.textContent = level;
+      linesMEl.textContent = lines;
     }
 
     function startGame() {
@@ -302,6 +443,8 @@
       render();
       reschedule();
     }
+
+    // ── Keyboard controls ────────────────────────────────────────────────────────
 
     document.addEventListener('keydown', (e) => {
       if (!game) return;
@@ -338,7 +481,103 @@
       render();
     });
 
+    // ── Touch / swipe controls ───────────────────────────────────────────────────
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const SWIPE_THRESHOLD = 20; // minimum px to count as a swipe
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (!game || game.is_game_over() || game.is_paused()) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (absDx < SWIPE_THRESHOLD && absDy < SWIPE_THRESHOLD) {
+        // Tap → rotate
+        game.rotate();
+      } else if (absDx >= absDy) {
+        // Horizontal swipe → move
+        if (dx > 0) game.move_right();
+        else        game.move_left();
+      } else {
+        // Vertical swipe down → soft or hard drop
+        if (dy > 0) {
+          if (absDy > CELL * 3) game.hard_drop();
+          else                  game.soft_drop();
+        }
+      }
+      render();
+    }, { passive: false });
+
+    // ── On-screen touch button wiring ────────────────────────────────────────────
+
+    function touchAction(action) {
+      if (!game) return;
+      action();
+      render();
+    }
+
+    document.getElementById('btn-rotate').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.rotate());
+    }, { passive: false });
+
+    document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.move_left());
+    }, { passive: false });
+
+    document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.move_right());
+    }, { passive: false });
+
+    document.getElementById('btn-soft').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.soft_drop());
+    }, { passive: false });
+
+    document.getElementById('btn-hard').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.hard_drop());
+    }, { passive: false });
+
+    document.getElementById('btn-pause').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (!game) return;
+      game.toggle_pause();
+      if (game.is_paused()) {
+        clearInterval(tickTimer);
+        tickTimer = null;
+        showMessage('Paused – tap ⏸ to resume');
+      } else {
+        hideMessage();
+        reschedule();
+      }
+    }, { passive: false });
+
+    document.getElementById('btn-new').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startGame();
+    }, { passive: false });
+
+    // ── Resize handler ───────────────────────────────────────────────────────────
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Init ─────────────────────────────────────────────────────────────────────
+
     await init();
+    resizeCanvas();
     startGame();
   </script>
 </body>
