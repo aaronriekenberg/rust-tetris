@@ -161,7 +161,7 @@
     .touch-btn {
       flex: 1;
       min-height: 52px;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       background: var(--box-bg);
       color: var(--fg);
       border: 1px solid var(--box-border);
@@ -173,7 +173,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.3rem;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -236,21 +235,32 @@
 
       <div id="controls">
         <strong>Controls</strong>
-        ← / →   Move<br>
-        ↑ / Z   Rotate<br>
-        ↓       Soft drop<br>
-        Space   Hard drop<br>
-        P       Pause<br>
-        Enter   New game
+        ← / → Move<br>
+        ↑ / Z  Rotate<br>
+        ↓      Soft drop<br>
+        Space  Hard drop<br>
+        P      Pause<br>
+        Enter  New game
       </div>
     </div>
   </div>
 
-  <!-- Mobile-only touch controls: only Pause and New Game; movement via board zones -->
+  <!-- Mobile-only touch controls -->
   <div id="touch-controls">
     <div class="touch-row">
-      <button class="touch-btn" id="btn-pause">⏸ <span>Pause</span></button>
-      <button class="touch-btn" id="btn-new">↺ <span>New Game</span></button>
+      <button class="touch-btn" id="btn-rotate">↻</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-left">◀</button>
+      <button class="touch-btn" id="btn-right">▶</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-soft">▼</button>
+      <button class="touch-btn" id="btn-hard">⏬</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-pause">⏸</button>
+      <button class="touch-btn" id="btn-new">↺</button>
     </div>
   </div>
 
@@ -266,6 +276,8 @@
     const MIN_CELL_MOBILE  = 14; // smallest legible cell on a narrow phone
     const MIN_CELL_DESKTOP = 20; // minimum to keep the board usable on desktop
     const MAX_CELL_DESKTOP = 40; // cap so the board doesn't grow too large
+    // A swipe covering ≥3 cell heights is treated as a hard drop, shorter as soft drop
+    const HARD_DROP_SWIPE_CELLS = 3;
 
     function computeCell() {
       const vw = window.innerWidth;
@@ -275,9 +287,9 @@
         // Mobile vertical layout:
         //   h1 ~28px  + body-gap 8px
         //   + stats-bar ~50px + gap 8px
-        //   + touch-controls: 1 row × (52px button + 0px gap) ≈ 52px + gap 8px
+        //   + touch-controls: 4 rows × (52px button + 6.4px gap) ≈ 234px + gap 8px
         //   + body padding 8px
-        const reservedH = 28 + 8 + 50 + 8 + 52 + 8 + 8;
+        const reservedH = 28 + 8 + 50 + 8 + 234 + 8 + 8;
         const availH = vh - reservedH;
         const availW = vw - 8; // 4px body padding each side
         return Math.max(MIN_CELL_MOBILE, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
@@ -353,50 +365,8 @@
       msgEl.style.display = 'none';
     }
 
-    // ── Touch zone constants ──────────────────────────────────────────────────────
-    // Fraction of board width reserved for left/right move zones
-    const SIDE_ZONE  = 0.35;
-    // Fraction of board height reserved for the bottom drop zone
-    const BOTTOM_ZONE = 0.28;
-
     function draw(board) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw subtle touch-zone hints on narrow screens
-      if (window.innerWidth <= 600) {
-        const bw = canvas.width;
-        const bh = canvas.height;
-        const sideW  = bw * SIDE_ZONE;
-        const bottomH = bh * BOTTOM_ZONE;
-        const topH   = bh - bottomH;
-        ctx.save();
-
-        // Left zone
-        ctx.fillStyle = 'rgba(80,160,255,0.07)';
-        ctx.fillRect(0, 0, sideW, topH);
-        // Right zone
-        ctx.fillStyle = 'rgba(80,160,255,0.07)';
-        ctx.fillRect(bw - sideW, 0, sideW, topH);
-        // Bottom drop zone
-        ctx.fillStyle = 'rgba(255,180,60,0.07)';
-        ctx.fillRect(0, topH, bw, bottomH);
-
-        // Zone labels
-        const labelSize = Math.max(10, Math.round(CELL * 0.55));
-        ctx.font = `${labelSize}px monospace`;
-        ctx.textBaseline = 'middle';
-        ctx.globalAlpha = 0.22;
-        ctx.fillStyle = getCSSVar('--fg');
-
-        ctx.textAlign = 'center';
-        ctx.fillText('◀', sideW / 2, topH / 2);
-        ctx.fillText('▶', bw - sideW / 2, topH / 2);
-        ctx.fillText('↻', bw / 2, topH / 2);
-        ctx.fillText('▼  ▼▼', bw / 2, topH + bottomH / 2);
-
-        ctx.restore();
-      }
-
       // Draw grid
       ctx.strokeStyle = getCSSVar('--grid-color');
       ctx.lineWidth = 0.5;
@@ -441,7 +411,6 @@
       if (!alive) {
         clearInterval(tickTimer);
         tickTimer = null;
-        cancelBottomTapTimer();
         showMessage('Game Over – Enter to restart');
         render();
         return;
@@ -476,16 +445,7 @@
       linesMEl.textContent = lines;
     }
 
-    function cancelBottomTapTimer() {
-      if (bottomTapTimer !== null) {
-        clearTimeout(bottomTapTimer);
-        bottomTapTimer    = null;
-        lastBottomTapTime = 0;
-      }
-    }
-
     function startGame() {
-      cancelBottomTapTimer();
       if (tickTimer) clearInterval(tickTimer);
       game = new WasmGame();
       currentInterval = 0;
@@ -516,7 +476,6 @@
         case 'P':
           game.toggle_pause();
           if (game.is_paused()) {
-            cancelBottomTapTimer();
             clearInterval(tickTimer);
             tickTimer = null;
             showMessage('Paused – P to resume');
@@ -532,18 +491,11 @@
       render();
     });
 
-    // ── Touch controls on the board (zone-based) ─────────────────────────────────
+    // ── Touch / swipe controls ───────────────────────────────────────────────────
 
     let touchStartX = 0;
     let touchStartY = 0;
-    const TAP_MAX_DIST    = 18; // px – larger movement is not treated as a tap
-    const TAP_MAX_DIST_SQ = TAP_MAX_DIST * TAP_MAX_DIST; // avoid sqrt on every touch
-
-    // Double-tap detection for hard drop (bottom zone).
-    // 280 ms is long enough for a deliberate double-tap without delaying soft-drop noticeably.
-    let lastBottomTapTime = 0;
-    let bottomTapTimer    = null;
-    const DOUBLE_TAP_MS   = 280;
+    const SWIPE_THRESHOLD = 20; // minimum px to count as a swipe
 
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
@@ -554,61 +506,66 @@
     canvas.addEventListener('touchend', (e) => {
       e.preventDefault();
       if (!game || game.is_game_over() || game.is_paused()) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
 
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-
-      // Ignore swipes – only act on taps
-      if (dx * dx + dy * dy > TAP_MAX_DIST_SQ) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const relX = (touch.clientX - rect.left) / rect.width;
-      const relY = (touch.clientY - rect.top)  / rect.height;
-
-      if (relY >= 1 - BOTTOM_ZONE) {
-        // Bottom zone: single tap = soft drop, double tap = hard drop
-        const now = Date.now();
-        if (now - lastBottomTapTime < DOUBLE_TAP_MS) {
-          // Second tap within window → hard drop
-          clearTimeout(bottomTapTimer);
-          bottomTapTimer    = null;
-          lastBottomTapTime = 0;
-          game.hard_drop();
-          render();
-        } else {
-          // First tap: wait to see if a second arrives before acting
-          lastBottomTapTime = now;
-          bottomTapTimer = setTimeout(() => {
-            bottomTapTimer    = null;
-            lastBottomTapTime = 0;
-            if (game && !game.is_game_over() && !game.is_paused()) {
-              game.soft_drop();
-              render();
-            }
-          }, DOUBLE_TAP_MS);
-        }
-      } else if (relX < SIDE_ZONE) {
-        game.move_left();
-        render();
-      } else if (relX > 1 - SIDE_ZONE) {
-        game.move_right();
-        render();
-      } else {
-        // Centre strip → rotate
+      if (absDx < SWIPE_THRESHOLD && absDy < SWIPE_THRESHOLD) {
+        // Tap → rotate
         game.rotate();
-        render();
+      } else if (absDx >= absDy) {
+        // Horizontal swipe → move
+        if (dx > 0) game.move_right();
+        else        game.move_left();
+      } else {
+        // Vertical swipe down → soft or hard drop
+        if (dy > 0) {
+          if (absDy > CELL * HARD_DROP_SWIPE_CELLS) game.hard_drop();
+          else                  game.soft_drop();
+        }
       }
+      render();
     }, { passive: false });
 
-    // ── On-screen touch button wiring (Pause / New Game only) ───────────────────
+    // ── On-screen touch button wiring ────────────────────────────────────────────
+
+    function touchAction(action) {
+      if (!game) return;
+      action();
+      render();
+    }
+
+    document.getElementById('btn-rotate').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.rotate());
+    }, { passive: false });
+
+    document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.move_left());
+    }, { passive: false });
+
+    document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.move_right());
+    }, { passive: false });
+
+    document.getElementById('btn-soft').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.soft_drop());
+    }, { passive: false });
+
+    document.getElementById('btn-hard').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchAction(() => game.hard_drop());
+    }, { passive: false });
 
     document.getElementById('btn-pause').addEventListener('touchstart', (e) => {
       e.preventDefault();
       if (!game) return;
       game.toggle_pause();
       if (game.is_paused()) {
-        cancelBottomTapTimer();
         clearInterval(tickTimer);
         tickTimer = null;
         showMessage('Paused – tap ⏸ to resume');
