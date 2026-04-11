@@ -441,6 +441,7 @@
       if (!alive) {
         clearInterval(tickTimer);
         tickTimer = null;
+        cancelBottomTapTimer();
         showMessage('Game Over – Enter to restart');
         render();
         return;
@@ -475,7 +476,16 @@
       linesMEl.textContent = lines;
     }
 
+    function cancelBottomTapTimer() {
+      if (bottomTapTimer !== null) {
+        clearTimeout(bottomTapTimer);
+        bottomTapTimer    = null;
+        lastBottomTapTime = 0;
+      }
+    }
+
     function startGame() {
+      cancelBottomTapTimer();
       if (tickTimer) clearInterval(tickTimer);
       game = new WasmGame();
       currentInterval = 0;
@@ -506,6 +516,7 @@
         case 'P':
           game.toggle_pause();
           if (game.is_paused()) {
+            cancelBottomTapTimer();
             clearInterval(tickTimer);
             tickTimer = null;
             showMessage('Paused – P to resume');
@@ -525,9 +536,11 @@
 
     let touchStartX = 0;
     let touchStartY = 0;
-    const TAP_MAX_DIST = 18; // px – larger movement is not treated as a tap
+    const TAP_MAX_DIST    = 18; // px – larger movement is not treated as a tap
+    const TAP_MAX_DIST_SQ = TAP_MAX_DIST * TAP_MAX_DIST; // avoid sqrt on every touch
 
-    // Double-tap detection for hard drop (bottom zone)
+    // Double-tap detection for hard drop (bottom zone).
+    // 280 ms is long enough for a deliberate double-tap without delaying soft-drop noticeably.
     let lastBottomTapTime = 0;
     let bottomTapTimer    = null;
     const DOUBLE_TAP_MS   = 280;
@@ -547,7 +560,7 @@
       const dy = touch.clientY - touchStartY;
 
       // Ignore swipes – only act on taps
-      if (Math.sqrt(dx * dx + dy * dy) > TAP_MAX_DIST) return;
+      if (dx * dx + dy * dy > TAP_MAX_DIST_SQ) return;
 
       const rect = canvas.getBoundingClientRect();
       const relX = (touch.clientX - rect.left) / rect.width;
@@ -595,6 +608,7 @@
       if (!game) return;
       game.toggle_pause();
       if (game.is_paused()) {
+        cancelBottomTapTimer();
         clearInterval(tickTimer);
         tickTimer = null;
         showMessage('Paused – tap ⏸ to resume');
