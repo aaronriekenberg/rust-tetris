@@ -27,26 +27,28 @@ A TUI (Terminal User Interface) Tetris game written in Rust, with WebAssembly su
 
 ## Touch / Mobile Controls (iPhone & Android)
 
-On narrow screens (≤ 600 px wide) the wasm app switches to a mobile layout.
-All gameplay actions are performed by tapping directly on the board canvas —
-subtle zone hints are drawn on the board to guide you.
+On narrow screens (≤ 600 px wide) the wasm app switches to a mobile layout with
+on-screen buttons and swipe gestures on the board canvas.
 
-### Board tap zones
-
-| Zone | Action |
-|------|--------|
-| Left 35% of the board | Move left |
-| Right 35% of the board | Move right |
-| Centre strip (upper 72% of height) | Rotate |
-| Bottom 28% — single tap | Soft drop |
-| Bottom 28% — double tap | Hard drop |
-
-### Utility buttons (below the board)
+### On-screen buttons
 
 | Button | Action |
 |--------|--------|
-| ⏸ Pause | Pause / resume |
-| ↺ New Game | Start a new game |
+| ↻ | Rotate |
+| ◀ / ▶ | Move left / right |
+| ▼ | Soft drop |
+| ⏬ | Hard drop |
+| ⏸ | Pause / resume |
+| ↺ | New game |
+
+### Swipe gestures (on the board canvas)
+
+| Gesture | Action |
+|---------|--------|
+| Tap | Rotate |
+| Swipe left / right | Move left / right |
+| Short swipe down | Soft drop |
+| Long swipe down (≥ 3 cell heights) | Hard drop |
 
 ## Building & Running
 
