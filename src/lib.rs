@@ -61,6 +61,12 @@ impl WasmGame {
         self.state.toggle_pause();
     }
 
+    /// Return the next queued piece as a flat 4×4 `Vec<u8>` (16 bytes).
+    /// Value 0 = empty, otherwise an ANSI-256 colour index.
+    pub fn next_piece_flat(&self) -> Vec<u8> {
+        self.state.next_piece_flat()
+    }
+
     /// Return the board as a flat `Uint8Array` (row-major, 10×20 = 200 bytes).
     /// Value 0 = empty, 1 = ghost, otherwise an ANSI-256 colour index for the
     /// locked/active cell.
