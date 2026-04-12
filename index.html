@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, viewport-fit=cover" />
   <title>Rust Tetris</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,8 +47,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      min-height: 100dvh;
-      padding: 0.5rem 0.25rem;
+      min-height: 100svh;
+      padding: 0.5rem 0.25rem max(0.5rem, env(safe-area-inset-bottom));
       gap: 0.5rem;
       overflow-x: hidden;
     }
@@ -310,7 +310,9 @@
     // A swipe covering ≥3 cell heights is treated as a hard drop, shorter as soft drop
     const HARD_DROP_SWIPE_CELLS = 3;
 
-    function computeCell() {
+    const SAFARI_URL_BAR_HEIGHT = 56; // approximate height of Safari's floating URL bar on iOS
+
+
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
@@ -320,7 +322,8 @@
         //   + stats-bar ~38px (compact padding) + gap 8px
         //   + touch-controls: row1 44px + gap 6.4px + row2 44px + gap 6.4px + row3 32px ≈ 133px + gap 8px
         //   + body padding 8px
-        const reservedH = 28 + 8 + 38 + 8 + 133 + 8 + 8;
+        //   + ~56px extra for Safari floating URL bar / safe-area
+        const reservedH = 28 + 8 + 38 + 8 + 133 + 8 + 8 + SAFARI_URL_BAR_HEIGHT;
         const availH = vh - reservedH;
         const availW = vw - 8; // 4px body padding each side
         return Math.max(MIN_CELL_MOBILE, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
