@@ -160,7 +160,7 @@
 
     .touch-btn {
       flex: 1;
-      min-height: 52px;
+      min-height: 44px;
       font-size: 1.3rem;
       background: var(--box-bg);
       color: var(--fg);
@@ -178,6 +178,12 @@
 
     .touch-btn:active {
       background: var(--canvas-border);
+    }
+
+    .touch-btn-sm {
+      min-height: 32px;
+      font-size: 1rem;
+      opacity: 0.7;
     }
 
     /* On narrow screens switch to mobile layout */
@@ -248,10 +254,8 @@
   <!-- Mobile-only touch controls -->
   <div id="touch-controls">
     <div class="touch-row">
-      <button class="touch-btn" id="btn-rotate">↻</button>
-    </div>
-    <div class="touch-row">
       <button class="touch-btn" id="btn-left">◀</button>
+      <button class="touch-btn" id="btn-rotate">↻</button>
       <button class="touch-btn" id="btn-right">▶</button>
     </div>
     <div class="touch-row">
@@ -259,8 +263,8 @@
       <button class="touch-btn" id="btn-hard">⏬</button>
     </div>
     <div class="touch-row">
-      <button class="touch-btn" id="btn-pause">⏸</button>
-      <button class="touch-btn" id="btn-new">↺</button>
+      <button class="touch-btn touch-btn-sm" id="btn-pause">⏸</button>
+      <button class="touch-btn touch-btn-sm" id="btn-new">↺</button>
     </div>
   </div>
 
@@ -287,9 +291,9 @@
         // Mobile vertical layout:
         //   h1 ~28px  + body-gap 8px
         //   + stats-bar ~50px + gap 8px
-        //   + touch-controls: 4 rows × (52px button + 6.4px gap) ≈ 234px + gap 8px
+        //   + touch-controls: row1 44px + gap 6.4px + row2 44px + gap 6.4px + row3 32px ≈ 133px + gap 8px
         //   + body padding 8px
-        const reservedH = 28 + 8 + 50 + 8 + 234 + 8 + 8;
+        const reservedH = 28 + 8 + 50 + 8 + 133 + 8 + 8;
         const availH = vh - reservedH;
         const availW = vw - 8; // 4px body padding each side
         return Math.max(MIN_CELL_MOBILE, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
