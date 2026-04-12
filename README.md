@@ -50,6 +50,17 @@ on-screen buttons and swipe gestures on the board canvas.
 | Short swipe down | Soft drop |
 | Long swipe down (≥ 3 cell heights) | Hard drop |
 
+## Running the App
+
+There are three ways to run rust-tetris:
+
+1. **Web browser (desktop or mobile)** – no installation required.  
+   Visit <https://aaronriekenberg.github.io/rust-tetris/> to play the WebAssembly version directly in your browser.
+
+2. **Pre-built terminal executable** – download the binary for your platform from the [latest GitHub release](https://github.com/aaronriekenberg/rust-tetris/releases/latest) and run it in your terminal.
+
+3. **Build from source** – clone this repository and run with Cargo (see [Building & Running](#building--running) below).
+
 ## Building & Running
 
 ```bash
