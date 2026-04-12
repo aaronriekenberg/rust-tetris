@@ -203,6 +203,19 @@
       #sidebar { display: none; }
 
       #touch-controls { display: flex; }
+
+      /* Compact the stats bar so touch buttons don't overlap the Safari URL bar */
+      #stats-bar .stat-box {
+        padding: 0.2rem 0.4rem;
+      }
+
+      #stats-bar .stat-value {
+        font-size: 1rem;
+      }
+
+      #stats-bar .next-preview {
+        margin-top: 0.1rem;
+      }
     }
   </style>
 </head>
@@ -304,10 +317,10 @@
       if (vw <= 600) {
         // Mobile vertical layout:
         //   h1 ~28px  + body-gap 8px
-        //   + stats-bar ~50px + gap 8px
+        //   + stats-bar ~38px (compact padding) + gap 8px
         //   + touch-controls: row1 44px + gap 6.4px + row2 44px + gap 6.4px + row3 32px ≈ 133px + gap 8px
         //   + body padding 8px
-        const reservedH = 28 + 8 + 50 + 8 + 133 + 8 + 8;
+        const reservedH = 28 + 8 + 38 + 8 + 133 + 8 + 8;
         const availH = vh - reservedH;
         const availW = vw - 8; // 4px body padding each side
         return Math.max(MIN_CELL_MOBILE, Math.min(Math.floor(availW / COLS), Math.floor(availH / ROWS)));
