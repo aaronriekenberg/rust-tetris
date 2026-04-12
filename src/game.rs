@@ -346,6 +346,25 @@ impl GameState {
 
     // ── WASM-friendly board accessor ───────────────────────────────────────
 
+    /// Returns the next piece as a flat 4×4 `Vec<u8>` (16 bytes, row-major).
+    /// Each byte is the ANSI-256 colour index of the piece, or 0 for empty.
+    /// The piece is rendered at rotation 0 within its bounding box.
+    pub fn next_piece_flat(&self) -> Vec<u8> {
+        let mut buf = vec![0u8; 16];
+        let color = PIECE_COLORS[self.next_kind.index()];
+        for (dr, dc) in PIECE_CELLS[self.next_kind.index()][0] {
+            if dr < 0 || dc < 0 {
+                continue;
+            }
+            let r = dr as usize;
+            let c = dc as usize;
+            if r < 4 && c < 4 {
+                buf[r * 4 + c] = color;
+            }
+        }
+        buf
+    }
+
     /// Returns the board as a flat `Vec<u8>` row-major (0 = empty, else colour
     /// index).  The current piece and its ghost are overlaid so a WASM
     /// consumer can render from a single call.

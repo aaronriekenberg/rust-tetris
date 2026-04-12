@@ -88,6 +88,12 @@
       text-align: center;
     }
 
+    .next-preview {
+      display: block;
+      margin: 0.2rem auto 0;
+      image-rendering: pixelated;
+    }
+
     .stat-box {
       background: var(--box-bg);
       border: 1px solid var(--box-border);
@@ -206,6 +212,10 @@
   <!-- Mobile-only horizontal stats bar -->
   <div id="stats-bar">
     <div class="stat-box">
+      <div class="stat-label">Next</div>
+      <canvas id="next-canvas-m" class="next-preview"></canvas>
+    </div>
+    <div class="stat-box">
       <div class="stat-label">Score</div>
       <div class="stat-value" id="score-m">0</div>
     </div>
@@ -226,6 +236,10 @@
     </div>
 
     <div id="sidebar">
+      <div class="stat-box">
+        <div class="stat-label">Next</div>
+        <canvas id="next-canvas" class="next-preview"></canvas>
+      </div>
       <div class="stat-box">
         <div class="stat-label">Score</div>
         <div class="stat-value" id="score">0</div>
@@ -341,6 +355,11 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
+    const nextCanvasEl  = document.getElementById('next-canvas');
+    const nextCanvasMEl = document.getElementById('next-canvas-m');
+    const nextCtx  = nextCanvasEl.getContext('2d');
+    const nextCtxM = nextCanvasMEl.getContext('2d');
+
     const scoreEl  = document.getElementById('score');
     const levelEl  = document.getElementById('level');
     const linesEl  = document.getElementById('lines');
@@ -354,6 +373,41 @@
       canvas.width  = COLS * CELL;
       canvas.height = ROWS * CELL;
       if (game) render();
+    }
+
+    const PREVIEW_SIZE = 4; // 4×4 bounding box
+
+    function computePreviewCell() {
+      // On mobile (narrow screens) use a compact cell; on desktop a larger one.
+      if (window.innerWidth <= 600) {
+        return Math.max(8, Math.min(14, Math.floor(CELL * 0.85)));
+      }
+      return Math.max(14, Math.min(24, Math.floor(CELL * 0.75)));
+    }
+
+    function drawNextPiece() {
+      if (!game) return;
+      const flat = game.next_piece_flat();
+      const pCell = computePreviewCell();
+      const size = PREVIEW_SIZE * pCell;
+
+      for (const [cvs, pCtx] of [[nextCanvasEl, nextCtx], [nextCanvasMEl, nextCtxM]]) {
+        cvs.width  = size;
+        cvs.height = size;
+        pCtx.clearRect(0, 0, size, size);
+        for (let r = 0; r < PREVIEW_SIZE; r++) {
+          for (let c = 0; c < PREVIEW_SIZE; c++) {
+            const v = flat[r * PREVIEW_SIZE + c];
+            if (v === 0) continue;
+            const x = c * pCell;
+            const y = r * pCell;
+            pCtx.fillStyle = ANSI256[v] ?? '#888';
+            pCtx.fillRect(x + 1, y + 1, pCell - 2, pCell - 2);
+            pCtx.fillStyle = 'rgba(255,255,255,0.15)';
+            pCtx.fillRect(x + 1, y + 1, pCell - 2, 4);
+          }
+        }
+      }
     }
 
     let game = null;
@@ -438,6 +492,7 @@
     function render() {
       if (!game) return;
       draw(game.board_flat());
+      drawNextPiece();
       const score = game.score();
       const level = game.level();
       const lines = game.lines_cleared();
