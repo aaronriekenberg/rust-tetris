@@ -7,8 +7,8 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 
-use crate::game::{GameState, BOARD_HEIGHT, BOARD_WIDTH};
-use crate::tetromino::{TetrominoKind, PIECE_CELLS};
+use crate::game::{BOARD_HEIGHT, BOARD_WIDTH, GameState};
+use crate::tetromino::{PIECE_CELLS, TetrominoKind};
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -48,12 +48,12 @@ fn compute_origin() -> (u16, u16) {
 /// Map ANSI-256 index to the nearest crossterm `Color`.
 fn ansi_to_color(n: u8) -> Color {
     match n {
-        51 => Color::Cyan,       // I
-        226 => Color::Yellow,    // O
-        129 => Color::Magenta,   // T
-        46 => Color::Green,      // S
-        196 => Color::Red,       // Z
-        21 => Color::Blue,       // J
+        51 => Color::Cyan,        // I
+        226 => Color::Yellow,     // O
+        129 => Color::Magenta,    // T
+        46 => Color::Green,       // S
+        196 => Color::Red,        // Z
+        21 => Color::Blue,        // J
         208 => Color::DarkYellow, // L (closest to orange in named colours)
         _ => Color::White,
     }
@@ -93,7 +93,10 @@ pub fn draw_static_frame(out: &mut impl Write) -> io::Result<()> {
             out,
             MoveTo(oc, or + BOARD_TOP + r),
             Print("║"),
-            MoveTo(oc + BOARD_LEFT + BOARD_WIDTH as u16 * CELL_W, or + BOARD_TOP + r),
+            MoveTo(
+                oc + BOARD_LEFT + BOARD_WIDTH as u16 * CELL_W,
+                or + BOARD_TOP + r
+            ),
             Print("║"),
         )?;
     }
@@ -271,7 +274,12 @@ fn draw_sidebar(out: &mut impl Write, gs: &GameState, (oc, or): (u16, u16)) -> i
 
 // ── Overlay ───────────────────────────────────────────────────────────────────
 
-fn draw_overlay(out: &mut impl Write, title: &str, subtitle: &str, (oc, or): (u16, u16)) -> io::Result<()> {
+fn draw_overlay(
+    out: &mut impl Write,
+    title: &str,
+    subtitle: &str,
+    (oc, or): (u16, u16),
+) -> io::Result<()> {
     let center_row = or + BOARD_TOP + BOARD_HEIGHT as u16 / 2 - 1;
     let center_col = oc + BOARD_LEFT;
 

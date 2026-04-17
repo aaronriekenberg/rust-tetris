@@ -1,4 +1,4 @@
-use crate::tetromino::{TetrominoKind, PIECE_CELLS};
+use crate::tetromino::{PIECE_CELLS, TetrominoKind};
 
 pub const BOARD_WIDTH: usize = 10;
 pub const BOARD_HEIGHT: usize = 20;
