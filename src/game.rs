@@ -76,8 +76,8 @@ impl Board {
 
         // Rebuild board: empty rows on top, kept rows on bottom
         let empty_rows = BOARD_HEIGHT - kept.len();
-        for r in 0..empty_rows {
-            self.cells[r] = [None; BOARD_WIDTH];
+        for row in self.cells.iter_mut().take(empty_rows) {
+            *row = [None; BOARD_WIDTH];
         }
         for (i, row) in kept.iter().rev().enumerate() {
             self.cells[empty_rows + i] = *row;

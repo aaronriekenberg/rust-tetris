@@ -180,11 +180,11 @@ fn draw_board(out: &mut impl Write, gs: &GameState, (oc, or): (u16, u16)) -> io:
             (vec![], None)
         };
 
-    for r in 0..BOARD_HEIGHT {
+    for (r, row) in gs.board.cells.iter().enumerate() {
         let term_row = or + BOARD_TOP + r as u16;
         queue!(out, MoveTo(oc + BOARD_LEFT, term_row))?;
 
-        for c in 0..BOARD_WIDTH {
+        for (c, cell) in row.iter().enumerate() {
             let ri = r as i32;
             let ci = c as i32;
 
@@ -211,10 +211,10 @@ fn draw_board(out: &mut impl Write, gs: &GameState, (oc, or): (u16, u16)) -> io:
                 continue;
             }
 
-            if let Some(color) = gs.board.cells[r][c] {
+            if let Some(color) = cell {
                 queue!(
                     out,
-                    SetBackgroundColor(ansi_to_color(color)),
+                    SetBackgroundColor(ansi_to_color(*color)),
                     Print("  "),
                     ResetColor,
                 )?;
